@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import CommentModal from "./CommentModal";
 
 const AllPosts = () => {
   const [posts, setPosts] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [postId, setPostId] = useState("");
+  const [existingComment, setExistingComment] = useState([]);
   const { user } = useSelector((state) => state.user);
   const BASE_URL = "http://localhost:3000";
   //   const [likedPosts, setLikedPosts] = useState([]); // to track likes locally
@@ -22,11 +26,6 @@ const AllPosts = () => {
     fetchPosts();
   }, []);
   const handleLike = async (postId) => {
-    // setLikedPosts((prev) => ({
-    //   ...prev,
-    //   [postId]: !prev[postId],
-    // }));
-    // Optionally send like to backend here
     try {
       const res = await axios.put(
         `http://localhost:3000/post-like/${postId}`,
@@ -47,6 +46,7 @@ const AllPosts = () => {
     navigator.clipboard.writeText(fullUrl);
     alert("Post link copied to clipboard!");
   };
+
   return (
     <div style={{ padding: "1rem" }}>
       <h2>All Posts</h2>
@@ -82,13 +82,21 @@ const AllPosts = () => {
               />
             )}
             <p>{post.description}</p>
+            <p>{post.likes.length} Likes</p>
             <div style={{ marginTop: "10px", display: "flex", gap: "1rem" }}>
               <button onClick={() => handleLike(post._id)}>
-                {post.likes?.includes(user._id) ? "❤️ Liked" : "🤍 Like"}
+                {post.likes?.includes(user?._id) ? "❤️ Liked" : "🤍 Like"}
               </button>
 
-              <button onClick={() => alert("Comment feature coming soon!")}>
-                💬 Comment
+              <button
+                onClick={() => {
+                  setIsModalOpen(true);
+                  setPostId(post._id);
+                  setExistingComment(post.comments);
+                }}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                Open Comments
               </button>
 
               <button onClick={() => handleShare(post.mediaUrl)}>
@@ -97,6 +105,17 @@ const AllPosts = () => {
             </div>
           </div>
         ))
+      )}
+      {isModalOpen && (
+        <CommentModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          postId={postId}
+          // onSubmit={handleNewComment}
+
+          userId={user?._id}
+          existingComments={existingComment}
+        />
       )}
     </div>
   );
